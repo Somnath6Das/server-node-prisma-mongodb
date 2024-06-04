@@ -2,12 +2,35 @@ import prisma from "../config/db.config.js";
 
 export const index = async (req, res) => {
   try {
+
+    // * pagination
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 1;
+    if (page <= 0) {
+      page = 1;
+    }
+    if (limit <= 0 || limit > 100) {
+      limit = 1;
+    }
+    const skip = (page - 1) * limit;
+
     const movies = await prisma.movie.findMany({
-      select: {
-        name: true,
+      take: limit,
+      skip: skip,
+      include: {
+        cast: {
+          select: {
+            name: true,
+            description: true,
+          },
+        },
       },
     });
-    return res.status(200).json({ movies });
+    const totalMovies = await prisma.movie.count();
+    const totalPages = Math.ceil(totalMovies / limit);
+    return res.status(200).json({ movies, metadata: {
+      totalPages, currentPage: page, currentLimit: limit
+    } });
   } catch (err) {}
 };
 
@@ -66,3 +89,18 @@ export const remove = async (req, res) => {
     return res.status(200).json({ message: "Movie deleted" });
   } catch (err) {}
 };
+
+export const search = async (req,res)=>{
+  const query = req.query.q
+  const movies = await prisma.movie.findMany({
+    where: {
+      name:{
+        startsWith: query,
+        mode: "insensitive", 
+        //contains: query
+        //equals: query
+      }
+    }
+  })
+  return res.status(200).json({ movies });
+}
