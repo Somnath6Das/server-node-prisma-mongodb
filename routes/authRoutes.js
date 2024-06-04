@@ -9,4 +9,6 @@ router.post("/auth/login", AuthController.login)
 // * Private route
 router.get("/auth/user",AuthMiddleware, AuthController.user)
 
+
+
 export default router;

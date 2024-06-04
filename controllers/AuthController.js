@@ -8,15 +8,14 @@ class AuthController {
       const payload = req.body;
       const salt = bcrypt.genSaltSync(10);
       payload.password = bcrypt.hashSync(payload.password, salt);
+
       const findUser = await prisma.user.findUnique({
         where: {
           email: payload.email,
         },
       });
       if (findUser) {
-        return res
-          .status(401)
-          .json({ message: "User already registered." });
+        return res.status(401).json({ message: "User already registered." });
       }
       if (!findUser) {
         const user = await prisma.user.create({ data: payload });
